@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import { HealthService } from "./services/health/index.js";
 
 async function init() {
   const PORT = Number(process.env.PORT) || 8001;
@@ -19,29 +20,23 @@ async function init() {
     const _uptimeH = Math.floor(_uptimeM / 60) || 0;
     const _uptimeD = Math.floor(_uptimeH / 24) || 0;
     const _uptime = `${_uptimeD}d ${_uptimeH}h ${_uptimeM}m ${_uptimeS}s`;
-    // try {
-    //   await Health.healthCheck();
-
-    //   res.status(200).json({
-    //     server: "healthy",
-    //     database: "connected",
-    //     uptime: _uptime,
-    //     timestamp: new Date().toLocaleString(),
-    //   });
-    // } catch (error) {
-    //   res.status(500).json({
-    //     server: "unhealthy",
-    //     database: "disconnected",
-    //     uptime: _uptime,
-    //     timestamp: new Date().toLocaleString(),
-    //   });
-    // }
-    res.status(200).json({
-      server: "healthy",
-      database: "not-connected",
-      uptime: _uptime,
-      timestamp: new Date().toLocaleString(),
-    });
+    try {
+      await HealthService.healthCheck();
+      res.status(200).json({
+        server: "healthy",
+        database: "connected",
+        uptime: _uptime,
+        timestamp: new Date().toLocaleString(),
+      });
+    } catch (error) {
+      console.log("Health check failed:", error);
+      res.status(500).json({
+        server: "unhealthy",
+        database: "disconnected",
+        uptime: _uptime,
+        timestamp: new Date().toLocaleString(),
+      });
+    }
   });
 
   app.listen(PORT, () => {
